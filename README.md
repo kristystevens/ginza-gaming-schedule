@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ginza Gaming Poker Schedule
+
+A web application for managing and displaying poker event schedules for Ginza Gaming, a crypto-backed invite-only poker community.
+
+## Features
+
+- 📅 **Schedule View**: Daily and weekly views of poker events
+- 🎮 **Event Actions**: Quick links to watch streams, join games, open Telegram chats, and register on Luma
+- 👨‍💼 **Admin Panel**: Full CRUD operations for managing events
+- 🤖 **Telegram Bot**: Automated promo and reminder messages
+- 🎨 **Dark Theme**: Premium poker/crypto-themed UI with Tailwind CSS
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Styling**: Tailwind CSS
+- **Language**: TypeScript
+- **Bot**: Telegraf + node-cron
 
 ## Getting Started
 
-First, run the development server:
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Run the Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the schedule.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Access Admin Panel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Navigate to [http://localhost:3000/admin](http://localhost:3000/admin) to manage events.
 
-## Learn More
+### 4. Set Up Telegram Bot (Optional)
 
-To learn more about Next.js, take a look at the following resources:
+1. Create a `.env` file in the root directory:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+TELEGRAM_CHAT_ID=your_chat_id_here
+PROMO_OFFSET_MINUTES=120
+REMINDER_OFFSET_MINUTES=10
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. Get your bot token from [@BotFather](https://t.me/botfather) on Telegram
+3. Get your chat ID:
+   - For the Ginza Public Chat: The chat ID for [Ginza Public Chat](https://t.me/+tUSssIotf7QzZGRh) needs to be obtained
+   - You can use [@userinfobot](https://t.me/userinfobot) or check Telegram API
+   - Or add your bot to the group and use [@RawDataBot](https://t.me/RawDataBot) to get the chat ID
 
-## Deploy on Vercel
+4. Run the bot:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+node telegram-bot.js
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The bot will:
+- Send day-before reminder messages (1 day before each event at 10 AM EST) - encourages RSVP
+- Send promo messages 2 hours before each event (configurable)
+- Send reminder messages 10 minutes before each event (configurable)
+
+## Project Structure
+
+```
+ginza-gaming-schedule/
+├── src/
+│   ├── app/
+│   │   ├── page.tsx          # Main schedule view
+│   │   ├── admin/
+│   │   │   └── page.tsx       # Admin panel
+│   │   └── api/
+│   │       └── events/        # API routes for events
+│   └── lib/
+│       └── events.ts          # Event data and utilities
+├── telegram-bot.js            # Telegram bot script
+└── data/
+    └── events.json            # Events exported for bot (auto-generated)
+```
+
+## Event Data Structure
+
+Each event contains:
+
+- `id`: Unique identifier
+- `eventName`: Name of the event
+- `date`: Date in YYYY-MM-DD format
+- `startTime`: Time in HH:MM format
+- `stakes`: Stakes description (e.g., "NLH 1/2")
+- `gameType`: Type of game (e.g., "No Limit Hold'em")
+- `description`: Optional description
+- `streamingLink`: Optional streaming URL
+- `gameLink`: Optional game/table URL
+- `telegramChatLink`: Optional Telegram chat URL
+- `lumaEventUrl`: Optional Luma event registration URL
+
+## Building for Production
+
+```bash
+npm run build
+npm start
+```
+
+## Notes
+
+- Events are currently stored in-memory. For production, integrate with a database.
+- The Telegram bot reads from `data/events.json`, which is auto-generated when events are accessed via the API.
+- Make sure to sync events before running the bot by visiting `/api/events/export` or accessing the admin panel.
