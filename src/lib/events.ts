@@ -92,6 +92,11 @@ function toPokerEvent(event: Event): PokerEvent {
 
 // Event utilities
 export async function getAllEvents(): Promise<PokerEvent[]> {
+  // During build time, return empty array if DATABASE_URL is not set
+  if (!process.env.DATABASE_URL) {
+    return [];
+  }
+
   const dbEvents = await prisma.event.findMany({
     where: {
       parentEventId: null, // Only get parent events, not instances
@@ -127,6 +132,10 @@ export async function getAllEvents(): Promise<PokerEvent[]> {
 }
 
 export async function getEventById(id: string): Promise<PokerEvent | null> {
+  if (!process.env.DATABASE_URL) {
+    return null;
+  }
+
   const event = await prisma.event.findUnique({
     where: { id },
   });
@@ -158,6 +167,10 @@ export async function getTodayEvents(): Promise<PokerEvent[]> {
 }
 
 export async function addEvent(event: Omit<PokerEvent, 'id'>): Promise<PokerEvent> {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is not set. Cannot add event.');
+  }
+
   const newEvent = await prisma.event.create({
     data: {
       eventName: event.eventName,
@@ -181,6 +194,10 @@ export async function addEvent(event: Omit<PokerEvent, 'id'>): Promise<PokerEven
 }
 
 export async function updateEvent(id: string, updates: Partial<PokerEvent>): Promise<PokerEvent | null> {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is not set. Cannot update event.');
+  }
+
   try {
     const updated = await prisma.event.update({
       where: { id },
@@ -208,6 +225,10 @@ export async function updateEvent(id: string, updates: Partial<PokerEvent>): Pro
 }
 
 export async function deleteEvent(id: string): Promise<boolean> {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is not set. Cannot delete event.');
+  }
+
   try {
     // Delete the event and all its recurring instances (if any)
     await prisma.event.deleteMany({

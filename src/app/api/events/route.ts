@@ -9,6 +9,10 @@ import {
 import fs from 'fs';
 import path from 'path';
 
+// Prevent static generation during build
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // Helper function to export events to JSON file for Telegram bot
 async function exportEventsToFile() {
   try {
@@ -25,19 +29,37 @@ async function exportEventsToFile() {
 }
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const id = searchParams.get('id');
-  
-  if (id) {
-    const event = await getEventById(id);
-    if (!event) {
-      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+  try {
+    // Check if DATABASE_URL is available
+    if (!process.env.DATABASE_URL) {
+      console.warn('DATABASE_URL not set, returning empty array');
+      return NextResponse.json([]);
     }
-    return NextResponse.json(event);
+
+    const searchParams = request.nextUrl.searchParams;
+    const id = searchParams.get('id');
+    
+    if (id) {
+      const event = await getEventById(id);
+      if (!event) {
+        return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+      }
+      return NextResponse.json(event);
+    }
+    
+    const events = await getAllEvents();
+    return NextResponse.json(events);
+  } catch (error) {
+    console.error('Error in GET:', error);
+    // During build, return empty array instead of error
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json([]);
+    }
+    return NextResponse.json(
+      { error: 'Failed to fetch events' },
+      { status: 500 }
+    );
   }
-  
-  const events = await getAllEvents();
-  return NextResponse.json(events);
 }
 
 export async function POST(request: NextRequest) {
