@@ -51,14 +51,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(events);
   } catch (error) {
     console.error('Error in GET:', error);
-    // During build, return empty array instead of error
-    if (!process.env.DATABASE_URL) {
-      return NextResponse.json([]);
-    }
-    return NextResponse.json(
-      { error: 'Failed to fetch events' },
-      { status: 500 }
-    );
+    // Always return empty array on error to prevent client-side crashes
+    // The client can handle empty arrays gracefully
+    return NextResponse.json([]);
   }
 }
 

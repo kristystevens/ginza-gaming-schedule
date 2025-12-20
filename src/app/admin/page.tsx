@@ -17,8 +17,15 @@ export default function AdminPage() {
   const fetchEvents = async () => {
     try {
       const response = await fetch('/api/events');
+      if (!response.ok) {
+        console.error('Failed to fetch events:', response.status);
+        setEvents([]);
+        setLoading(false);
+        return;
+      }
       const data = await response.json();
-      setEvents(data);
+      // Ensure data is always an array
+      setEvents(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching events:', error);
     } finally {

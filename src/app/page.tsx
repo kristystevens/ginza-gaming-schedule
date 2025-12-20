@@ -65,8 +65,14 @@ export default function Home() {
   const fetchEvents = async () => {
     try {
       const response = await fetch('/api/events');
+      if (!response.ok) {
+        console.error('Failed to fetch events:', response.status);
+        setAllEvents([]);
+        return;
+      }
       const data = await response.json();
-      setAllEvents(data);
+      // Ensure data is always an array
+      setAllEvents(Array.isArray(data) ? data : []);
       // Debug: log events for this week
       if (viewMode === 'week') {
         const today = new Date();
