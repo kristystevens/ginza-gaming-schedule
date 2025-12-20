@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { PokerEvent } from '@/lib/events';
-import { formatTime, formatTimeRange } from '@/lib/events';
+import type { PokerEvent } from '@/lib/event-utils';
+import { formatTime, formatTimeRange } from '@/lib/event-utils';
 
 export default function AdminPage() {
   const [events, setEvents] = useState<PokerEvent[]>([]);

@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { formatTime, formatTimeRange, getDayName, isToday } from '@/lib/events';
-import type { PokerEvent } from '@/lib/events';
+import { formatTime, formatTimeRange, getDayName, isToday, type PokerEvent } from '@/lib/event-utils';
 
 type ViewMode = 'today' | 'week';
 

@@ -127,3 +127,4 @@ If you're still having issues:
 3. Make sure you're using PostgreSQL (not SQLite) for production
 4. Check that your database is accessible from Vercel's servers
 
+
