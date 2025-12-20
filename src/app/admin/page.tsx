@@ -90,6 +90,7 @@ export default function AdminPage() {
       date: formData.get('date') as string,
       startTime: formData.get('startTime') as string,
       endTime: formData.get('endTime') as string || undefined,
+      timezone: (formData.get('timezone') as Timezone) || 'EST',
       stakes: formData.get('stakes') as string,
       gameType: formData.get('gameType') as string,
       description: formData.get('description') as string || undefined,
@@ -273,6 +274,20 @@ function EventForm({ event, onSubmit, onCancel }: { event: PokerEvent | null; on
             />
           </div>
           <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Timezone *</label>
+            <select
+              name="timezone"
+              required
+              defaultValue={event?.timezone || 'EST'}
+              className="w-full px-3 py-2.5 rounded-lg bg-slate-950/50 border border-slate-700/40 text-slate-200 focus:outline-none focus:border-[#6513cf]/50 focus:ring-1 focus:ring-[#6513cf]/20 transition-all"
+            >
+              <option value="EST">EST (Eastern Standard Time)</option>
+              <option value="CST">CST (Central Standard Time)</option>
+              <option value="PST">PST (Pacific Standard Time)</option>
+            </select>
+            <p className="text-xs text-slate-500 mt-1">Select the timezone for this event's time</p>
+          </div>
+          <div>
             <label className="block text-sm font-medium text-slate-300 mb-1.5">Stakes *</label>
             <input
               type="text"
@@ -431,7 +446,7 @@ function EventRow({ event, onEdit, onDelete }: { event: PokerEvent; onEdit: () =
           </div>
           <div className="flex flex-wrap gap-1.5 mb-2.5">
             <span className="text-xs px-2 py-0.5 rounded-md bg-[#6513cf]/15 text-[#dc78ff] border border-[#6513cf]/25 font-medium">
-              {formatTimeRange(event.startTime, event.endTime ?? undefined, 'EST')}
+              {formatTimeRange(event.startTime, event.endTime ?? undefined, 'EST', (event.timezone || 'EST') as Timezone)}
             </span>
             <span className="text-xs px-2 py-0.5 rounded-md bg-slate-800/40 text-slate-300 border border-slate-700/40 font-medium">
               {event.date}

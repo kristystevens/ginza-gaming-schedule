@@ -7,6 +7,7 @@ export interface PokerEvent {
   date: string; // YYYY-MM-DD
   startTime: string; // HH:MM format
   endTime?: string | null; // HH:MM format (optional)
+  timezone?: string | null; // EST, CST, or PST (defaults to EST)
   stakes: string; // e.g., "NLH 1/2", "PLO 0.5/1"
   gameType: string;
   description?: string | null;
@@ -57,10 +58,10 @@ function getTimezoneAbbr(timezone: Timezone): string {
 }
 
 // Format time for display (e.g., "16:00" -> "4:00 PM EST")
-// Assumes stored time is in EST, converts to displayTimezone
-export function formatTime(time: string, displayTimezone: Timezone = 'EST'): string {
-  // Convert from EST (stored) to display timezone
-  const convertedTime = convertTime(time, 'EST', displayTimezone);
+// Converts from eventTimezone (stored) to displayTimezone (user preference)
+export function formatTime(time: string, displayTimezone: Timezone = 'EST', eventTimezone: Timezone = 'EST'): string {
+  // Convert from event's stored timezone to display timezone
+  const convertedTime = convertTime(time, eventTimezone, displayTimezone);
   const [hours, minutes] = convertedTime.split(':');
   const hour = parseInt(hours, 10);
   const ampm = hour >= 12 ? 'PM' : 'AM';
@@ -70,11 +71,11 @@ export function formatTime(time: string, displayTimezone: Timezone = 'EST'): str
 }
 
 // Format time range for display (e.g., "16:00" - "20:00" -> "4:00 PM - 8:00 PM EST")
-export function formatTimeRange(startTime: string, endTime?: string | null | undefined, displayTimezone: Timezone = 'EST'): string {
+export function formatTimeRange(startTime: string, endTime?: string | null | undefined, displayTimezone: Timezone = 'EST', eventTimezone: Timezone = 'EST'): string {
   if (!endTime) {
-    return formatTime(startTime, displayTimezone);
+    return formatTime(startTime, displayTimezone, eventTimezone);
   }
-  return `${formatTime(startTime, displayTimezone)} - ${formatTime(endTime, displayTimezone)}`;
+  return `${formatTime(startTime, displayTimezone, eventTimezone)} - ${formatTime(endTime, displayTimezone, eventTimezone)}`;
 }
 
 // Get day name from date string

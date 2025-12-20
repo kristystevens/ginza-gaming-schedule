@@ -16,6 +16,7 @@ model Event {
   date              String   // YYYY-MM-DD
   startTime         String   // HH:MM format
   endTime           String?
+  timezone          String?  @default("EST") // EST, CST, or PST
   stakes            String
   gameType          String
   description       String?

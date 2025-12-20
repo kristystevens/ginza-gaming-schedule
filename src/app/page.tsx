@@ -346,7 +346,7 @@ function EventCard({ event, compact = false }: { event: PokerEvent; compact?: bo
         </h3>
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-xs px-2 py-0.5 rounded-md bg-[#6513cf]/15 text-[#dc78ff] border border-[#6513cf]/25 font-medium">
-            {formatTimeRange(event.startTime, event.endTime ?? undefined, timezone)}
+            {formatTimeRange(event.startTime, event.endTime ?? undefined, timezone, (event.timezone || 'EST') as Timezone)}
           </span>
           <span className="text-xs px-2 py-0.5 rounded-md bg-slate-800/40 text-slate-300 border border-slate-700/40 font-medium">
             {event.stakes}
