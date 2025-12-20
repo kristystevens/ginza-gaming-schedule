@@ -68,11 +68,14 @@ export default function Home() {
       if (!response.ok) {
         console.error('Failed to fetch events:', response.status);
         setAllEvents([]);
+        setLoading(false);
         return;
       }
       const data = await response.json();
       // Ensure data is always an array
-      setAllEvents(Array.isArray(data) ? data : []);
+      const safeData = Array.isArray(data) ? data : [];
+      setAllEvents(safeData);
+      setLoading(false);
       // Debug: log events for this week
       if (viewMode === 'week') {
         const today = new Date();
@@ -97,9 +100,12 @@ export default function Home() {
 
   // Filter events based on view mode
   const events = useMemo(() => {
+    // Defensive check: ensure allEvents is always an array
+    const safeEvents = Array.isArray(allEvents) ? allEvents : [];
+    
     if (viewMode === 'today') {
       const today = new Date().toISOString().split('T')[0];
-      return allEvents.filter(e => e.date === today);
+      return safeEvents.filter(e => e.date === today);
     } else {
       // Get events for this week
       const today = new Date();
@@ -110,7 +116,7 @@ export default function Home() {
       endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday
       endOfWeek.setHours(23, 59, 59, 999); // Set to end of day
 
-      return allEvents.filter(event => {
+      return safeEvents.filter(event => {
         const eventDate = new Date(event.date + 'T00:00:00'); // Parse as date only
         return eventDate >= startOfWeek && eventDate <= endOfWeek;
       });
@@ -119,13 +125,16 @@ export default function Home() {
 
   // Group events by date for weekly view
   const eventsByDate = useMemo(() => {
+    // Defensive check: ensure events is always an array
+    const safeEvents = Array.isArray(events) ? events : [];
+    
     if (viewMode === 'today') {
       const today = new Date().toISOString().split('T')[0];
-      return { [today]: events };
+      return { [today]: safeEvents };
     }
     
     const grouped: Record<string, PokerEvent[]> = {};
-    events.forEach(event => {
+    safeEvents.forEach(event => {
       // Ensure date is in YYYY-MM-DD format (handle any timezone issues)
       const eventDateStr = event.date.split('T')[0];
       if (!grouped[eventDateStr]) {
