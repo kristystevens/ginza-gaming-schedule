@@ -331,7 +331,8 @@ function WeeklyView({ eventsByDate }: { eventsByDate: Record<string, PokerEvent[
   );
 }
 
-function EventCard({ event, compact = false, timezone = 'EST' }: { event: PokerEvent; compact?: boolean; timezone?: Timezone }) {
+function EventCard(props: { event: PokerEvent; compact?: boolean; timezone?: Timezone }) {
+  const { event, compact = false, timezone = 'EST' } = props;
   return (
     <div
       className={`rounded-lg border bg-slate-900/50 backdrop-blur-sm transition-all hover:border-[#6513cf]/40 hover:shadow-lg hover:shadow-[#6513cf]/5 hover:-translate-y-0.5 ${
