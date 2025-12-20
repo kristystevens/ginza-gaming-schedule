@@ -264,7 +264,7 @@ function TodayView({ events }: { events: PokerEvent[] }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
       {events.map(event => (
-        <EventCard key={event.id} event={event} />
+        <EventCard key={event.id} event={event} timezone={timezone} />
       ))}
     </div>
   );
@@ -320,7 +320,7 @@ function WeeklyView({ eventsByDate }: { eventsByDate: Record<string, PokerEvent[
                 <p className="text-slate-600 text-xs text-center py-6">No events</p>
               ) : (
                 dayEvents.map(event => (
-                  <EventCard key={event.id} event={event} compact />
+                  <EventCard key={event.id} event={event} compact timezone={timezone} />
                 ))
               )}
             </div>
@@ -331,7 +331,7 @@ function WeeklyView({ eventsByDate }: { eventsByDate: Record<string, PokerEvent[
   );
 }
 
-function EventCard({ event, compact = false }: { event: PokerEvent; compact?: boolean }) {
+function EventCard({ event, compact = false, timezone = 'EST' }: { event: PokerEvent; compact?: boolean; timezone?: Timezone }) {
   return (
     <div
       className={`rounded-lg border bg-slate-900/50 backdrop-blur-sm transition-all hover:border-[#6513cf]/40 hover:shadow-lg hover:shadow-[#6513cf]/5 hover:-translate-y-0.5 ${
