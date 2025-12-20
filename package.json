@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && prisma db push --skip-generate && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
@@ -26,7 +26,6 @@
     "prisma": "^5.19.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "server-only": "^0.0.1",
     "telegraf": "^4.16.3"
   },
   "devDependencies": {
