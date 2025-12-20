@@ -237,16 +237,16 @@ export default function Home() {
 
         {/* Schedule Content */}
         {viewMode === 'today' ? (
-          <TodayView events={events} />
+          <TodayView events={events} timezone={timezone} />
         ) : (
-          <WeeklyView eventsByDate={eventsByDate} />
+          <WeeklyView eventsByDate={eventsByDate} timezone={timezone} />
         )}
       </div>
     </div>
   );
 }
 
-function TodayView({ events }: { events: PokerEvent[] }) {
+function TodayView({ events, timezone }: { events: PokerEvent[]; timezone: Timezone }) {
   if (events.length === 0) {
     return (
       <div className="text-center py-16">
@@ -270,7 +270,7 @@ function TodayView({ events }: { events: PokerEvent[] }) {
   );
 }
 
-function WeeklyView({ eventsByDate }: { eventsByDate: Record<string, PokerEvent[]> }) {
+function WeeklyView({ eventsByDate, timezone }: { eventsByDate: Record<string, PokerEvent[]>; timezone: Timezone }) {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const today = new Date().toISOString().split('T')[0];
   
