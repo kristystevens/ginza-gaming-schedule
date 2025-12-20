@@ -93,6 +93,7 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Error fetching events:', error);
+      setAllEvents([]); // Set to empty array on any error
     } finally {
       setLoading(false);
     }
