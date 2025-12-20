@@ -67,6 +67,13 @@ export default function Home() {
     };
   }, []);
 
+  // Save timezone preference when it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('timezone-preference', timezone);
+    }
+  }, [timezone]);
+
   // Refresh events when view mode changes
   useEffect(() => {
     fetchEvents();
