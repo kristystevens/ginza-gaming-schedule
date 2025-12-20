@@ -1,3 +1,4 @@
+import 'server-only';
 import { prisma } from './db';
 import type { Event } from '@prisma/client';
 import type { PokerEvent } from './event-utils';

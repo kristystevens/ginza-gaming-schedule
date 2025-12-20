@@ -1,3 +1,4 @@
+import 'server-only';
 import { PrismaClient } from '@prisma/client';
 
 // Prisma Client singleton pattern for serverless environments (Vercel)
