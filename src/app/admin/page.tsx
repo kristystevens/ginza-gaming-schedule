@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { PokerEvent } from '@/lib/event-utils';
-import { formatTime, formatTimeRange } from '@/lib/event-utils';
+import { formatTime, formatTimeRange, type Timezone } from '@/lib/event-utils';
 
 export default function AdminPage() {
   const [events, setEvents] = useState<PokerEvent[]>([]);
@@ -431,7 +431,7 @@ function EventRow({ event, onEdit, onDelete }: { event: PokerEvent; onEdit: () =
           </div>
           <div className="flex flex-wrap gap-1.5 mb-2.5">
             <span className="text-xs px-2 py-0.5 rounded-md bg-[#6513cf]/15 text-[#dc78ff] border border-[#6513cf]/25 font-medium">
-              {formatTimeRange(event.startTime, event.endTime ?? undefined)}
+              {formatTimeRange(event.startTime, event.endTime ?? undefined, 'EST')}
             </span>
             <span className="text-xs px-2 py-0.5 rounded-md bg-slate-800/40 text-slate-300 border border-slate-700/40 font-medium">
               {event.date}

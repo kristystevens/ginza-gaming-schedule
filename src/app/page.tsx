@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { formatTime, formatTimeRange, getDayName, isToday, type PokerEvent } from '@/lib/event-utils';
+import { formatTime, formatTimeRange, getDayName, isToday, type PokerEvent, type Timezone } from '@/lib/event-utils';
 
 type ViewMode = 'today' | 'week';
 
@@ -9,6 +9,16 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [allEvents, setAllEvents] = useState<PokerEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [timezone, setTimezone] = useState<Timezone>(() => {
+    // Load timezone preference from localStorage, default to EST
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('timezone-preference');
+      if (saved === 'EST' || saved === 'CST' || saved === 'PST') {
+        return saved;
+      }
+    }
+    return 'EST';
+  });
 
   // Fetch events from API
   useEffect(() => {
@@ -177,16 +187,17 @@ export default function Home() {
             </a>
           </div>
 
-          {/* View Toggle */}
-          <div className="inline-flex gap-1 bg-slate-900/60 p-1 rounded-lg border border-slate-800/40">
-            <button
-              onClick={() => setViewMode('today')}
-              className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${
-                viewMode === 'today'
-                  ? 'bg-[#6513cf] text-white shadow-md shadow-[#6513cf]/30'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
+          {/* View Toggle and Timezone Selector */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="inline-flex gap-1 bg-slate-900/60 p-1 rounded-lg border border-slate-800/40">
+              <button
+                onClick={() => setViewMode('today')}
+                className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${
+                  viewMode === 'today'
+                    ? 'bg-[#6513cf] text-white shadow-md shadow-[#6513cf]/30'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
               Today
             </button>
             <button
@@ -199,6 +210,21 @@ export default function Home() {
             >
               This Week
             </button>
+            </div>
+            
+            {/* Timezone Selector */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-slate-400 font-medium">Timezone:</label>
+              <select
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value as Timezone)}
+                className="px-3 py-1.5 rounded-md text-sm font-medium bg-slate-900/60 text-slate-200 border border-slate-800/40 hover:bg-slate-800/80 hover:border-slate-600/60 transition-all focus:outline-none focus:ring-2 focus:ring-[#6513cf]/50"
+              >
+                <option value="EST">EST</option>
+                <option value="CST">CST</option>
+                <option value="PST">PST</option>
+              </select>
+            </div>
           </div>
         </header>
 
@@ -313,7 +339,7 @@ function EventCard({ event, compact = false }: { event: PokerEvent; compact?: bo
         </h3>
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-xs px-2 py-0.5 rounded-md bg-[#6513cf]/15 text-[#dc78ff] border border-[#6513cf]/25 font-medium">
-            {formatTimeRange(event.startTime, event.endTime ?? undefined)}
+            {formatTimeRange(event.startTime, event.endTime ?? undefined, timezone)}
           </span>
           <span className="text-xs px-2 py-0.5 rounded-md bg-slate-800/40 text-slate-300 border border-slate-700/40 font-medium">
             {event.stakes}

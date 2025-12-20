@@ -21,21 +21,60 @@ export interface PokerEvent {
   parentEventId?: string | null; // ID of the parent event for recurring instances
 }
 
+// Timezone support
+export type Timezone = 'EST' | 'CST' | 'PST';
+
+// Timezone offsets in hours from EST
+const TIMEZONE_OFFSETS: Record<Timezone, number> = {
+  EST: 0,   // Eastern Standard Time (UTC-5)
+  CST: -1,  // Central Standard Time (UTC-6)
+  PST: -3,  // Pacific Standard Time (UTC-8)
+};
+
+// Convert time from EST to another timezone
+function convertTime(time: string, fromTimezone: Timezone, toTimezone: Timezone): string {
+  if (fromTimezone === toTimezone) {
+    return time;
+  }
+
+  const [hours, minutes] = time.split(':').map(Number);
+  const offsetDiff = TIMEZONE_OFFSETS[toTimezone] - TIMEZONE_OFFSETS[fromTimezone];
+  let newHour = hours + offsetDiff;
+
+  // Handle day rollover
+  if (newHour < 0) {
+    newHour += 24;
+  } else if (newHour >= 24) {
+    newHour -= 24;
+  }
+
+  return `${String(newHour).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}
+
+// Get timezone abbreviation
+function getTimezoneAbbr(timezone: Timezone): string {
+  return timezone;
+}
+
 // Format time for display (e.g., "16:00" -> "4:00 PM EST")
-export function formatTime(time: string): string {
-  const [hours, minutes] = time.split(':');
+// Assumes stored time is in EST, converts to displayTimezone
+export function formatTime(time: string, displayTimezone: Timezone = 'EST'): string {
+  // Convert from EST (stored) to display timezone
+  const convertedTime = convertTime(time, 'EST', displayTimezone);
+  const [hours, minutes] = convertedTime.split(':');
   const hour = parseInt(hours, 10);
   const ampm = hour >= 12 ? 'PM' : 'AM';
   const displayHour = hour % 12 || 12;
-  return `${displayHour}:${minutes} ${ampm} EST`;
+  const tzAbbr = getTimezoneAbbr(displayTimezone);
+  return `${displayHour}:${minutes} ${ampm} ${tzAbbr}`;
 }
 
 // Format time range for display (e.g., "16:00" - "20:00" -> "4:00 PM - 8:00 PM EST")
-export function formatTimeRange(startTime: string, endTime?: string | null | undefined): string {
+export function formatTimeRange(startTime: string, endTime?: string | null | undefined, displayTimezone: Timezone = 'EST'): string {
   if (!endTime) {
-    return formatTime(startTime);
+    return formatTime(startTime, displayTimezone);
   }
-  return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+  return `${formatTime(startTime, displayTimezone)} - ${formatTime(endTime, displayTimezone)}`;
 }
 
 // Get day name from date string
