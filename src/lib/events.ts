@@ -81,38 +81,44 @@ export async function getAllEvents(): Promise<PokerEvent[]> {
     return [];
   }
 
-  const dbEvents = await prisma.event.findMany({
-    where: {
-      parentEventId: null, // Only get parent events, not instances
-    },
-    orderBy: [
-      { date: 'asc' },
-      { startTime: 'asc' },
-    ],
-  });
+  try {
+    const dbEvents = await prisma.event.findMany({
+      where: {
+        parentEventId: null, // Only get parent events, not instances
+      },
+      orderBy: [
+        { date: 'asc' },
+        { startTime: 'asc' },
+      ],
+    });
 
-  const allEvents: PokerEvent[] = [];
-  const now = new Date();
-  const endDate = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000); // 90 days ahead
+    const allEvents: PokerEvent[] = [];
+    const now = new Date();
+    const endDate = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000); // 90 days ahead
 
-  for (const event of dbEvents) {
-    const pokerEvent = toPokerEvent(event);
-    // Add the original event
-    allEvents.push(pokerEvent);
-    
-    // Generate recurring instances if applicable
-    if (pokerEvent.isRecurring && pokerEvent.recurrencePattern) {
-      const instances = generateRecurringInstances(pokerEvent, endDate);
-      allEvents.push(...instances);
+    for (const event of dbEvents) {
+      const pokerEvent = toPokerEvent(event);
+      // Add the original event
+      allEvents.push(pokerEvent);
+      
+      // Generate recurring instances if applicable
+      if (pokerEvent.isRecurring && pokerEvent.recurrencePattern) {
+        const instances = generateRecurringInstances(pokerEvent, endDate);
+        allEvents.push(...instances);
+      }
     }
-  }
 
-  // Sort by date and time
-  return allEvents.sort((a, b) => {
-    const dateCompare = a.date.localeCompare(b.date);
-    if (dateCompare !== 0) return dateCompare;
-    return a.startTime.localeCompare(b.startTime);
-  });
+    // Sort by date and time
+    return allEvents.sort((a, b) => {
+      const dateCompare = a.date.localeCompare(b.date);
+      if (dateCompare !== 0) return dateCompare;
+      return a.startTime.localeCompare(b.startTime);
+    });
+  } catch (error) {
+    console.error('Error fetching events from database:', error);
+    // Return empty array on any database error to prevent crashes
+    return [];
+  }
 }
 
 export async function getEventById(id: string): Promise<PokerEvent | null> {
@@ -120,10 +126,15 @@ export async function getEventById(id: string): Promise<PokerEvent | null> {
     return null;
   }
 
-  const event = await prisma.event.findUnique({
-    where: { id },
-  });
-  return event ? toPokerEvent(event) : null;
+  try {
+    const event = await prisma.event.findUnique({
+      where: { id },
+    });
+    return event ? toPokerEvent(event) : null;
+  } catch (error) {
+    console.error('Error fetching event by ID:', error);
+    return null;
+  }
 }
 
 export async function getEventsByDate(date: string): Promise<PokerEvent[]> {

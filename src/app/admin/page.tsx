@@ -9,6 +9,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [editingEvent, setEditingEvent] = useState<PokerEvent | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -16,18 +18,38 @@ export default function AdminPage() {
 
   const fetchEvents = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const response = await fetch('/api/events');
+      
       if (!response.ok) {
-        console.error('Failed to fetch events:', response.status);
+        let errorMessage = `Failed to fetch events (${response.status})`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          try {
+            const errorText = await response.text();
+            if (errorText) errorMessage = errorText;
+          } catch {
+            // Use default error message
+          }
+        }
+        console.error('Failed to fetch events:', response.status, errorMessage);
         setEvents([]);
-        setLoading(false);
+        setError(errorMessage);
         return;
       }
+      
       const data = await response.json();
       // Ensure data is always an array
       setEvents(Array.isArray(data) ? data : []);
+      setError(null);
     } catch (error) {
       console.error('Error fetching events:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load events. Please refresh the page.';
+      setError(errorMessage);
+      setEvents([]);
     } finally {
       setLoading(false);
     }
@@ -79,54 +101,82 @@ export default function AdminPage() {
 
   const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    
     const formData = new FormData(e.currentTarget);
     
     const isRecurring = formData.get('isRecurring') === 'on';
     const recurrencePattern = formData.get('recurrencePattern') as 'daily' | 'weekly' | 'monthly' | null;
     const recurrenceEndDate = formData.get('recurrenceEndDate') as string | null;
 
+    // Helper to convert empty strings to undefined
+    const getValue = (value: FormDataEntryValue | null): string | undefined => {
+      const str = value as string;
+      return str && str.trim() ? str.trim() : undefined;
+    };
+
     const eventData: Partial<PokerEvent> = {
-      eventName: formData.get('eventName') as string,
-      date: formData.get('date') as string,
-      startTime: formData.get('startTime') as string,
-      endTime: formData.get('endTime') as string || undefined,
-      timezone: (formData.get('timezone') as Timezone) || 'EST',
-      stakes: formData.get('stakes') as string,
-      gameType: formData.get('gameType') as string,
-      description: formData.get('description') as string || undefined,
-      streamingLink: formData.get('streamingLink') as string || undefined,
-      gameLink: formData.get('gameLink') as string || undefined,
-      telegramChatLink: formData.get('telegramChatLink') as string || undefined,
-      lumaEventUrl: formData.get('lumaEventUrl') as string || undefined,
+      eventName: (formData.get('eventName') as string)?.trim(),
+      date: (formData.get('date') as string)?.trim(),
+      startTime: (formData.get('startTime') as string)?.trim(),
+      endTime: getValue(formData.get('endTime')),
+      timezone: ((formData.get('timezone') as Timezone) || 'EST') as Timezone,
+      stakes: (formData.get('stakes') as string)?.trim(),
+      gameType: (formData.get('gameType') as string)?.trim(),
+      description: getValue(formData.get('description')),
+      streamingLink: getValue(formData.get('streamingLink')),
+      gameLink: getValue(formData.get('gameLink')),
+      telegramChatLink: getValue(formData.get('telegramChatLink')),
+      lumaEventUrl: getValue(formData.get('lumaEventUrl')),
       isRecurring: isRecurring,
       recurrencePattern: isRecurring && recurrencePattern ? recurrencePattern : undefined,
       recurrenceEndDate: isRecurring && recurrenceEndDate ? recurrenceEndDate : undefined,
     };
 
+    // Validate required fields
+    if (!eventData.eventName || !eventData.date || !eventData.startTime || !eventData.stakes || !eventData.gameType) {
+      setError('Please fill in all required fields.');
+      return;
+    }
+
     try {
       const url = '/api/events';
-      const method = editingEvent ? 'POST' : 'POST';
       const body = editingEvent ? { ...eventData, id: editingEvent.id } : eventData;
 
       const response = await fetch(url, {
-        method,
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
 
-      if (response.ok) {
-        fetchEvents();
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        const errorMessage = errorData.error || `Failed to ${editingEvent ? 'update' : 'create'} event. Status: ${response.status}`;
+        setError(errorMessage);
+        console.error('Error response:', errorData);
+        return;
+      }
+
+      const result = await response.json();
+      setSuccess(editingEvent ? 'Event updated successfully!' : 'Event created successfully!');
+      fetchEvents();
+      
+      // Clear form after a short delay
+      setTimeout(() => {
         setShowForm(false);
         setEditingEvent(null);
         (e.target as HTMLFormElement).reset();
-        
-        // Notify other tabs/windows that events were updated
-        localStorage.setItem('events-updated', Date.now().toString());
-        // Trigger custom event for same-tab listeners
-        window.dispatchEvent(new CustomEvent('events-updated'));
-      }
+        setSuccess(null);
+      }, 1500);
+      
+      // Notify other tabs/windows that events were updated
+      localStorage.setItem('events-updated', Date.now().toString());
+      // Trigger custom event for same-tab listeners
+      window.dispatchEvent(new CustomEvent('events-updated'));
     } catch (error) {
       console.error('Error saving event:', error);
+      setError(error instanceof Error ? error.message : 'Failed to save event. Please try again.');
     }
   };
 
@@ -183,8 +233,24 @@ export default function AdminPage() {
             onCancel={() => {
               setShowForm(false);
               setEditingEvent(null);
+              setError(null);
+              setSuccess(null);
             }}
+            error={error}
+            success={success}
           />
+        )}
+
+        {error && !showForm && (
+          <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/40 text-red-400">
+            {error}
+          </div>
+        )}
+
+        {success && !showForm && (
+          <div className="mb-6 p-4 rounded-lg bg-green-500/10 border border-green-500/40 text-green-400">
+            {success}
+          </div>
         )}
 
         <div className="mt-8">
@@ -223,7 +289,7 @@ export default function AdminPage() {
   );
 }
 
-function EventForm({ event, onSubmit, onCancel }: { event: PokerEvent | null; onSubmit: (e: React.FormEvent<HTMLFormElement>) => void; onCancel: () => void }) {
+function EventForm({ event, onSubmit, onCancel, error, success }: { event: PokerEvent | null; onSubmit: (e: React.FormEvent<HTMLFormElement>) => void; onCancel: () => void; error?: string | null; success?: string | null }) {
   const [isRecurring, setIsRecurring] = useState(event?.isRecurring || false);
 
   return (
@@ -231,6 +297,19 @@ function EventForm({ event, onSubmit, onCancel }: { event: PokerEvent | null; on
       <h3 className="text-xl sm:text-2xl font-semibold text-slate-200 mb-5">
         {event ? 'Edit Event' : 'Create New Event'}
       </h3>
+      
+      {error && (
+        <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/40 text-red-400 text-sm">
+          {error}
+        </div>
+      )}
+      
+      {success && (
+        <div className="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/40 text-green-400 text-sm">
+          {success}
+        </div>
+      )}
+      
       <form onSubmit={onSubmit} className="space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           <div>

@@ -59,8 +59,21 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if DATABASE_URL is available
+    if (!process.env.DATABASE_URL) {
+      console.error('DATABASE_URL not set in POST request');
+      return NextResponse.json({ error: 'Database not configured. Please set DATABASE_URL environment variable.' }, { status: 500 });
+    }
+
     const body = await request.json();
     const { id, ...eventData } = body;
+    
+    // Validate required fields
+    if (!id && (!eventData.eventName || !eventData.date || !eventData.startTime || !eventData.stakes || !eventData.gameType)) {
+      return NextResponse.json({ 
+        error: 'Missing required fields: eventName, date, startTime, stakes, and gameType are required.' 
+      }, { status: 400 });
+    }
     
     if (id) {
       // Update existing event
@@ -78,7 +91,10 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Error in POST:', error);
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return NextResponse.json({ 
+      error: `Failed to save event: ${errorMessage}` 
+    }, { status: 500 });
   }
 }
 
