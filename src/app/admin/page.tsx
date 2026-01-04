@@ -23,27 +23,54 @@ export default function AdminPage() {
       const response = await fetch('/api/events');
       
       if (!response.ok) {
+        // Only show error for actual HTTP errors (not 200/empty array)
         let errorMessage = `Failed to fetch events (${response.status})`;
         try {
           const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch {
+          // Check if errorData has an error property or is an error object
+          if (errorData && typeof errorData === 'object') {
+            if (errorData.error) {
+              errorMessage = String(errorData.error);
+            } else if (errorData.message) {
+              errorMessage = String(errorData.message);
+            }
+            // Include details if available (for debugging)
+            if (errorData.details) {
+              console.error('Error details:', errorData.details);
+            }
+          } else if (typeof errorData === 'string') {
+            errorMessage = errorData;
+          }
+        } catch (parseError) {
           try {
             const errorText = await response.text();
-            if (errorText) errorMessage = errorText;
+            if (errorText && errorText.trim()) {
+              errorMessage = errorText.length > 200 ? errorText.substring(0, 200) + '...' : errorText;
+            }
           } catch {
             // Use default error message
           }
         }
-        console.error('Failed to fetch events:', response.status, errorMessage);
+        // Ensure errorMessage is always a string
+        const finalErrorMessage = String(errorMessage || `Failed to fetch events (${response.status})`);
+        // Log errors (Next.js will handle NODE_ENV replacement at build time)
+        console.error('Failed to fetch events:', response.status, finalErrorMessage);
         setEvents([]);
-        setError(errorMessage);
+        setError(finalErrorMessage);
         return;
       }
       
       const data = await response.json();
+      // Check if the response is an error object instead of an array
+      if (data && typeof data === 'object' && data.error && !Array.isArray(data)) {
+        setError(data.error);
+        setEvents([]);
+        return;
+      }
       // Ensure data is always an array
-      setEvents(Array.isArray(data) ? data : []);
+      const eventsArray = Array.isArray(data) ? data : [];
+      setEvents(eventsArray);
+      // Clear error if we successfully got an array (even if empty)
       setError(null);
     } catch (error) {
       console.error('Error fetching events:', error);
@@ -151,10 +178,30 @@ export default function AdminPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        const errorMessage = errorData.error || `Failed to ${editingEvent ? 'update' : 'create'} event. Status: ${response.status}`;
+        let errorMessage = `Failed to ${editingEvent ? 'update' : 'create'} event. Status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          if (errorData && typeof errorData === 'object') {
+            errorMessage = errorData.error || errorData.message || errorMessage;
+            // Log full error details for debugging
+            // Log error response for debugging
+            console.error('Error response:', errorData);
+          } else if (typeof errorData === 'string') {
+            errorMessage = errorData;
+          }
+        } catch (parseError) {
+          // If JSON parsing fails, try to get text response
+          try {
+            const errorText = await response.text();
+            if (errorText) {
+              errorMessage = errorText.length > 200 ? errorText.substring(0, 200) + '...' : errorText;
+            }
+          } catch {
+            // Use default error message if all parsing fails
+            console.error('Failed to parse error response:', parseError);
+          }
+        }
         setError(errorMessage);
-        console.error('Error response:', errorData);
         return;
       }
 

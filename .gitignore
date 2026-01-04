@@ -42,6 +42,8 @@ next-env.d.ts
 
 # data
 /data
+# But allow events.json to be committed for Vercel JSON storage
+!/data/events.json
 
 # prisma
 /prisma/*.db

@@ -30,12 +30,6 @@ async function exportEventsToFile() {
 
 export async function GET(request: NextRequest) {
   try {
-    // Check if DATABASE_URL is available
-    if (!process.env.DATABASE_URL) {
-      console.warn('DATABASE_URL not set, returning empty array');
-      return NextResponse.json([]);
-    }
-
     const searchParams = request.nextUrl.searchParams;
     const id = searchParams.get('id');
     
@@ -51,6 +45,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(events);
   } catch (error) {
     console.error('Error in GET:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    // Return error details in development for debugging
+    if (process.env.NODE_ENV === 'development') {
+      return NextResponse.json({ 
+        error: errorMessage,
+        details: error instanceof Error ? error.stack : undefined
+      }, { status: 500 });
+    }
     // Always return empty array on error to prevent client-side crashes
     // The client can handle empty arrays gracefully
     return NextResponse.json([]);
@@ -59,12 +61,6 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if DATABASE_URL is available
-    if (!process.env.DATABASE_URL) {
-      console.error('DATABASE_URL not set in POST request');
-      return NextResponse.json({ error: 'Database not configured. Please set DATABASE_URL environment variable.' }, { status: 500 });
-    }
-
     const body = await request.json();
     const { id, ...eventData } = body;
     

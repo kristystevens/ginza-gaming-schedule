@@ -76,12 +76,13 @@ function toPokerEvent(event: Event): PokerEvent {
 
 // Event utilities
 export async function getAllEvents(): Promise<PokerEvent[]> {
-  // During build time, return empty array if DATABASE_URL is not set
-  if (!process.env.DATABASE_URL) {
-    return [];
-  }
-
   try {
+    // Check if DATABASE_URL is available
+    if (!process.env.DATABASE_URL) {
+      console.warn('DATABASE_URL not set, returning empty array');
+      return [];
+    }
+
     const dbEvents = await prisma.event.findMany({
       where: {
         parentEventId: null, // Only get parent events, not instances
@@ -115,8 +116,8 @@ export async function getAllEvents(): Promise<PokerEvent[]> {
       return a.startTime.localeCompare(b.startTime);
     });
   } catch (error) {
-    console.error('Error fetching events from database:', error);
-    // Return empty array on any database error to prevent crashes
+    console.error('Error fetching events:', error);
+    // Return empty array on any error to prevent crashes
     return [];
   }
 }
